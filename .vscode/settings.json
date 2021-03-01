@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "user_interface.h": "c",
+        "pattern.h": "c"
+    }
+}

@@ -1,4 +1,8 @@
-//Copyright 2015 <>< Charles Lohr, see LICENSE file.
+/* 
+Copyright 2015 <>< Charles Lohr, see LICENSE file.
+*/
+
+#include <mdns.h>
 
 #include "mem.h"
 #include "c_types.h"
@@ -8,11 +12,14 @@
 #include "osapi.h"
 #include "espconn.h"
 #include "esp82xxutil.h"
-#include "ws2812_i2s.h"
 #include "commonservices.h"
-#include <mdns.h>
+#include "pwm.h"
+#include "gpio.h"
+
+#include "ws2812_i2s.h"
 #include "vars.h"
 #include "pattern.h"
+#include "user_config.h"
 
 #define procTaskPrio        0
 #define procTaskQueueLen    1
@@ -24,13 +31,14 @@ usr_conf_t * UsrCfg = (usr_conf_t*)(SETTINGS.UserData);
 uint8_t last_leds[512*3] = {0};
 uint32_t frame = 0;
 
-
 //int ICACHE_FLASH_ATTR StartMDNS();
-
 
 void ICACHE_FLASH_ATTR user_rf_pre_init(void) {/*nothing.*/}
 
 
+/*=========================
+COMMON SERVICES BACKEND
+=========================*/
 //Tasks that happen all the time.
 os_event_t    procTaskQueue[procTaskQueueLen];
 static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
@@ -40,8 +48,44 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 }
 
 
-//Display pattern on connected LEDs
-static void ICACHE_FLASH_ATTR patternTimer(void *arg)
+/*=========================
+BRIGHTNESS PWM
+=========================*/
+static const uint32_t frequency = 6400000; // in hz, so 5kHz
+uint32_t maxDuty = 0;
+
+uint8_t ledDutyPercent = 10;
+uint32_t ledDuty = 0;
+
+uint8_t *pLedDutyPercent = &ledDutyPercent;
+uint32_t *pLedDuty = &ledDuty;
+
+void ICACHE_FLASH_ATTR 
+init_brightness(void *args)
+{
+    gpio_init();
+    maxDuty = (frequency * 1000)/45;
+
+    uint32_t pwmInfo[1][3] = {
+        {PERIPHS_IO_MUX_MTDO_U, FUNC_GPIO15, 15}
+    };
+
+    *pLedDuty = (uint32_t)((float)(ledDutyPercent/100.0) * (float)maxDuty);
+    pwm_init(frequency, pLedDuty, 1, pwmInfo);
+}
+
+void ICACHE_FLASH_ATTR 
+configure_brightness(void *args, uint32_t inputDutyCycle) 
+{
+	*pLedDuty = (uint32_t)((float)(inputDutyCycle/100.0) * (float)maxDuty);
+	pwm_set_duty(*pLedDuty, 0);
+	pwm_start();
+}
+
+/*=========================
+TIMERS
+=========================*/
+static void ICACHE_FLASH_ATTR ledPatternTimer(void *arg)
 {
     if(UsrCfg->ptrn == PTRN_NONE) return;
 
@@ -58,17 +102,20 @@ static void ICACHE_FLASH_ATTR patternTimer(void *arg)
     ws2812_push( (char*)last_leds, 3*UsrCfg->nled);
 }
 
-
-//Timer event.
-static void ICACHE_FLASH_ATTR myTimer(void *arg)
+static void ICACHE_FLASH_ATTR commonServicesTimer(void *arg)
 {
 	CSTick( 1 );
 }
 
 
-//Called when new packet comes in.
+/*=========================
+ESP8266 SERVER
+=========================*/
+/*
+Called when new led packet comes in.
+*/
 static void ICACHE_FLASH_ATTR
-udpserver_recv(void *arg, char *pusrdata, unsigned short len)
+udp_server_recv(void *arg, char *pusrdata, unsigned short len)
 {
     UsrCfg->ptrn = PTRN_NONE;
 	struct espconn *pespconn = (struct espconn *)arg;
@@ -84,21 +131,37 @@ udpserver_recv(void *arg, char *pusrdata, unsigned short len)
 	UsrCfg->nled = len / 3;
 }
 
+/*
+sets up the connection to the home network
+*/
+void 
+user_set_station_config(void)
+{
+    char ssid[32] = SSID;
+    char password[64] = PASSWORD;
+    struct station_config sta_conf = { 0 };
 
+    os_memcpy(sta_conf.ssid, ssid, 32);
+    os_memcpy(sta_conf.password, password, 64);
+    wifi_station_set_config(&sta_conf);
+}
+
+
+/*=========================
+MAIN EVENT LOOP
+=========================*/
 void ICACHE_FLASH_ATTR charrx( uint8_t c ) {/*Called from UART.*/}
 
-void  ICACHE_FLASH_ATTR umcall( void );
+void ICACHE_FLASH_ATTR umcall( void );
 
 void user_init(void)
 {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
-
-	uart0_sendStr("\r\nesp82XX Web-GUI\r\n" VERSSTR "\b");
-
+	uart0_sendStr("\r\nesp82XX Web-GUI\r\n");
 	umcall();
 }
 
-void  ICACHE_FLASH_ATTR umcall( void )
+void ICACHE_FLASH_ATTR umcall( void )
 {
 //Uncomment this to force a system restore.
 //	system_restore();
@@ -106,13 +169,17 @@ void  ICACHE_FLASH_ATTR umcall( void )
 	CSSettingsLoad( 0 );
     CSPreInit();
 
+	wifi_set_opmode(STATION_MODE);
+	user_set_station_config();
+	wifi_station_connect();
+
     pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
 	ets_memset( pUdpServer, 0, sizeof( struct espconn ) );
 	espconn_create( pUdpServer );
 	pUdpServer->type = ESPCONN_UDP;
 	pUdpServer->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
 	pUdpServer->proto.udp->local_port = COM_PORT;
-	espconn_regist_recvcb(pUdpServer, udpserver_recv);
+	espconn_regist_recvcb(pUdpServer, udp_server_recv);
 
 	if( espconn_create( pUdpServer ) )
 		while(1)
@@ -132,13 +199,13 @@ void  ICACHE_FLASH_ATTR umcall( void )
 
 	//Timer example
 	os_timer_disarm(&some_timer);
-	os_timer_setfn(&some_timer, (os_timer_func_t *)myTimer, NULL);
+	os_timer_setfn(&some_timer, (os_timer_func_t *)commonServicesTimer, NULL);
 	os_timer_arm(&some_timer, 100, 1);
 
 	//Pattern Timer example
 	os_timer_disarm(&pattern_timer);
-	os_timer_setfn(&pattern_timer, (os_timer_func_t *)patternTimer, NULL);
-	os_timer_arm(&pattern_timer, 20, 1); //~50 Hz
+	os_timer_setfn(&pattern_timer, (os_timer_func_t *)ledPatternTimer, NULL);
+	os_timer_arm(&pattern_timer, 20, 1); 
 
 	ws2812_init();
 
