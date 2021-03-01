@@ -51,36 +51,22 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 /*=========================
 BRIGHTNESS PWM
 =========================*/
-static const uint32_t frequency = 6400000; // in hz, so 5kHz
-uint32_t maxDuty = 0;
+// static const uint32_t frequency = 0; // in hz, so 5kHz
+// uint32_t maxDuty = 0;
 
-uint8_t ledDutyPercent = 10;
-uint32_t ledDuty = 0;
+// uint8_t ledDutyPercent = 0;
+// uint32_t ledDuty = 0;
 
-uint8_t *pLedDutyPercent = &ledDutyPercent;
-uint32_t *pLedDuty = &ledDuty;
+// uint8_t *pLedDutyPercent = &ledDutyPercent;
+// uint32_t *pLedDuty = &ledDuty;
 
-void ICACHE_FLASH_ATTR 
-init_brightness(void *args)
-{
-    gpio_init();
-    maxDuty = (frequency * 1000)/45;
-
-    uint32_t pwmInfo[1][3] = {
-        {PERIPHS_IO_MUX_MTDO_U, FUNC_GPIO15, 15}
-    };
-
-    *pLedDuty = (uint32_t)((float)(ledDutyPercent/100.0) * (float)maxDuty);
-    pwm_init(frequency, pLedDuty, 1, pwmInfo);
-}
-
-void ICACHE_FLASH_ATTR 
-configure_brightness(void *args, uint32_t inputDutyCycle) 
-{
-	*pLedDuty = (uint32_t)((float)(inputDutyCycle/100.0) * (float)maxDuty);
-	pwm_set_duty(*pLedDuty, 0);
-	pwm_start();
-}
+// void ICACHE_FLASH_ATTR 
+// configure_brightness(void *arg, uint32_t inputDutyCycle) 
+// {
+// 	*pLedDuty = (uint32_t)((float)(inputDutyCycle/100.0) * (float)maxDuty);
+// 	pwm_set_duty(*pLedDuty, 0);
+// 	pwm_start();
+// }
 
 /*=========================
 TIMERS
@@ -156,6 +142,23 @@ void ICACHE_FLASH_ATTR umcall( void );
 
 void user_init(void)
 {
+    // gpio_init();
+	// PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, FUNC_GPIO12);  
+	// GPIO_OUTPUT_SET(GPIO_ID_PIN(12), 1);
+    // maxDuty = (frequency * 1000)/45;
+
+	// // GPIO15 is D6 on ESP8266
+    // uint32_t pwmInfo[1][3] = {
+    //     {PERIPHS_IO_MUX_MTDI_U, FUNC_GPIO12, 12},
+    // };
+
+    // *pLedDuty = (uint32_t)((float)(ledDutyPercent/100.0) * (float)maxDuty);
+    // pwm_init(frequency, pLedDuty, 1, pwmInfo);
+	// pwm_set_duty(*pLedDuty, 0);
+	// // pwm_set_duty(142222222, 0);
+	// pwm_start();
+	// os_printf("\r\npwm initialized\r\n");
+
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
 	uart0_sendStr("\r\nesp82XX Web-GUI\r\n");
 	umcall();
@@ -172,6 +175,8 @@ void ICACHE_FLASH_ATTR umcall( void )
 	wifi_set_opmode(STATION_MODE);
 	user_set_station_config();
 	wifi_station_connect();
+
+	// configure_brightness(NULL, 50);
 
     pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
 	ets_memset( pUdpServer, 0, sizeof( struct espconn ) );

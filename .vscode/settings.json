@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "user_interface.h": "c",
-        "pattern.h": "c"
+        "pattern.h": "c",
+        "user_config.h": "c",
+        "pwm.h": "c",
+        "gpio.h": "c",
+        "osapi.h": "c"
     }
 }
