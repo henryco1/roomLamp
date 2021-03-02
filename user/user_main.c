@@ -24,6 +24,15 @@ Copyright 2015 <>< Charles Lohr, see LICENSE file.
 #define procTaskPrio        0
 #define procTaskQueueLen    1
 
+#define PWM_0_OUT_IO_MUX 		PERIPHS_IO_MUX_GPIO4_U
+#define PWM_0_OUT_IO_NUM 		4
+#define PWM_0_OUT_IO_FUNC 		FUNC_GPIO4
+
+// #define PWM_0_OUT_IO_MUX 		PERIPHS_IO_MUX_GPIO2_U
+// #define PWM_0_OUT_IO_NUM 		2
+// #define PWM_0_OUT_IO_FUNC 		FUNC_GPIO2
+#define PWM_CHANNEL				1
+
 static volatile os_timer_t some_timer;
 static volatile os_timer_t pattern_timer;
 static struct espconn *pUdpServer;
@@ -31,7 +40,7 @@ usr_conf_t * UsrCfg = (usr_conf_t*)(SETTINGS.UserData);
 uint8_t last_leds[512*3] = {0};
 uint32_t frame = 0;
 
-//int ICACHE_FLASH_ATTR StartMDNS();
+int ICACHE_FLASH_ATTR StartMDNS();
 
 void ICACHE_FLASH_ATTR user_rf_pre_init(void) {/*nothing.*/}
 
@@ -51,22 +60,24 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 /*=========================
 BRIGHTNESS PWM
 =========================*/
-// static const uint32_t frequency = 0; // in hz, so 5kHz
-// uint32_t maxDuty = 0;
+// static const uint32_t frequency = 2272000; // in hz, so 5kHz
+static const uint32_t frequency = 850000; // in hz, so 5kHz
+uint32_t maxDuty = 0;
 
-// uint8_t ledDutyPercent = 0;
-// uint32_t ledDuty = 0;
+uint8_t ledDutyPercent = 100;
+uint32_t ledDuty = 0;
 
-// uint8_t *pLedDutyPercent = &ledDutyPercent;
-// uint32_t *pLedDuty = &ledDuty;
+uint8_t *pLedDutyPercent = &ledDutyPercent;
+uint32_t *pLedDuty = &ledDuty;
 
-// void ICACHE_FLASH_ATTR 
-// configure_brightness(void *arg, uint32_t inputDutyCycle) 
-// {
-// 	*pLedDuty = (uint32_t)((float)(inputDutyCycle/100.0) * (float)maxDuty);
-// 	pwm_set_duty(*pLedDuty, 0);
-// 	pwm_start();
-// }
+void ICACHE_FLASH_ATTR 
+configure_brightness(void *arg, uint32_t inputDutyCycle) 
+{
+	*pLedDuty = (uint32_t)((float)(inputDutyCycle/100.0) * (float)maxDuty);
+	// *pLedDuty = (uint32_t)floorf(((float)powf(*pLedDutyPercent/100.0, 2)) * (float)maxDuty);
+	pwm_set_duty(*pLedDuty, 0);
+	pwm_start();
+}
 
 /*=========================
 TIMERS
@@ -91,6 +102,8 @@ static void ICACHE_FLASH_ATTR ledPatternTimer(void *arg)
 static void ICACHE_FLASH_ATTR commonServicesTimer(void *arg)
 {
 	CSTick( 1 );
+	configure_brightness(NULL, ledDutyPercent);
+	os_printf("\r\nJihyo tick\r\n");
 }
 
 
@@ -140,24 +153,30 @@ void ICACHE_FLASH_ATTR charrx( uint8_t c ) {/*Called from UART.*/}
 
 void ICACHE_FLASH_ATTR umcall( void );
 
-void user_init(void)
+void ICACHE_FLASH_ATTR
+user_init(void)
 {
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
+	// gpio_output_set(BIT4, 0, BIT4, 0);
+	GPIO_OUTPUT_SET(GPIO_ID_PIN(4), 1);
+	// PIN_PULLUP_EN(PERIPHS_IO_MUX_GPIO4_U);
+	// PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
+	// gpio_output_set(BIT5, 0, BIT5, 0);
+	// GPIO_OUTPUT_SET(GPIO_ID_PIN(5), 1);
+	// PIN_PULLUP_EN(PERIPHS_IO_MUX_GPIO5_U);
+
     // gpio_init();
-	// PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U, FUNC_GPIO12);  
-	// GPIO_OUTPUT_SET(GPIO_ID_PIN(12), 1);
-    // maxDuty = (frequency * 1000)/45;
+    maxDuty = (frequency * 1000)/45;
 
-	// // GPIO15 is D6 on ESP8266
-    // uint32_t pwmInfo[1][3] = {
-    //     {PERIPHS_IO_MUX_MTDI_U, FUNC_GPIO12, 12},
-    // };
+	// GPIO4 is D2 on ESP8266
+    uint32_t pwmInfo[][3] = {
+        {PWM_0_OUT_IO_MUX, PWM_0_OUT_IO_FUNC, PWM_0_OUT_IO_NUM},
+    };
 
-    // *pLedDuty = (uint32_t)((float)(ledDutyPercent/100.0) * (float)maxDuty);
-    // pwm_init(frequency, pLedDuty, 1, pwmInfo);
-	// pwm_set_duty(*pLedDuty, 0);
-	// // pwm_set_duty(142222222, 0);
-	// pwm_start();
-	// os_printf("\r\npwm initialized\r\n");
+    *pLedDuty = (uint32_t)((float)(ledDutyPercent/100.0) * (float)maxDuty);
+    pwm_init(frequency, pLedDuty, PWM_CHANNEL, pwmInfo);
+	pwm_start();
+	os_printf("\r\npwm initialized\r\n");
 
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
 	uart0_sendStr("\r\nesp82XX Web-GUI\r\n");
@@ -168,9 +187,9 @@ void ICACHE_FLASH_ATTR umcall( void )
 {
 //Uncomment this to force a system restore.
 //	system_restore();
-
 	CSSettingsLoad( 0 );
     CSPreInit();
+
 
 	wifi_set_opmode(STATION_MODE);
 	user_set_station_config();

@@ -5,6 +5,10 @@
         "user_config.h": "c",
         "pwm.h": "c",
         "gpio.h": "c",
-        "osapi.h": "c"
+        "osapi.h": "c",
+        "ws2812_i2s.h": "c",
+        "espconn.h": "c",
+        "esp82xxutil.h": "c",
+        "vars.h": "c"
     }
 }

@@ -139,3 +139,42 @@ uint32_t hex_pattern( uint8_t pattern, uint16_t light, uint16_t lights, uint32_t
 
     return hex;
 }
+
+			// if( clr != NULL ) 
+			// {
+			// 	// rbg to hsv
+			// 	float R = clr[0] / 255;
+			// 	float G = clr[1] / 255;
+			// 	float B = clr[2] / 255;
+
+			// 	float color_max = max(R, max(G, B));
+			// 	float color_min = min(R, min(G, B));
+			// 	float color = color_max - color_min;
+
+			// 	float hue;
+			// 	if (color_max == color_min) hue = 0;
+			// 	else if (color_max == R) 
+			// 	{
+			// 		hue = (60 * ((G - B) / color) + 360) % 360;
+			// 	}
+			// 	else if (color_max == G) 
+			// 	{
+			// 		hue = (60 * ((B - R) / color) + 120) % 360;
+			// 	}
+			// 	else if (color_max == B) 
+			// 	{
+			// 		hue = (60 * ((R - G) / color) + 240) % 360;
+			// 	}
+
+			// 	float saturation;
+			// 	if (color_max == 0) saturation = 0;
+			// 	else 
+			// 	{
+			// 		saturation = (color / color_max) * 100;
+			// 	}
+
+			// 	float value = color_max * 100 * brightness;
+
+			// 	hex = HSVtoHEX(hue, saturation, 0);
+			// 	// hex = clr[0] | clr[1]<<8 | clr[2]<<16; 
+			// 	// break;
