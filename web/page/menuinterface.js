@@ -57,16 +57,14 @@ function init()
 			+ "</td>";
 
 	$('#MainMenu > tbody:first-child').before( "\
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'SystemStatus' ); SystemInfoTick();\" value='System Status' id=SystemStatusClicker></td><td> \
+		<tr><td> \
 		<div id=SystemStatus class='collapsible'> \
 		<table width=100% border=1><tr><td> \
 <div id=output></div><div id=systemsettings></div> \n		</td></tr></table></div></td></tr>"
 	);
 
 	$('#MainMenu > tbody:last-child').after( "\
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'WifiSettings' ); KickWifiTicker();\" value=\"Wifi Settings\"></td><td> \
+		<tr><td> \
 		<div id=WifiSettings class=\"collapsible\"> \
 		<table width=100% border=1><tr><td> \
 		Current Configuration: (May deviate from default configuration, reset here if in doubt)<form name=\"wifisection\" action=\"javascript:ChangeWifiConfig();\"> \
@@ -83,8 +81,7 @@ function init()
 		<input type=submit onclick=\"ScanForWifi();\" value=\"Scan For Stations (Will disconnect!)\"> \
 		</td></tr></table></div></td></tr> \
 		 \
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'CustomCommand' );\" value=\"Custom Command\"></td><td> \
+		<tr><td> \
 		<div id=CustomCommand class=\"collapsible\"> \
 		<table width=100% border=1><tr><td> \
 		Command: <input type=text id=custom_command> \
@@ -92,15 +89,13 @@ function init()
 		<textarea id=custom_command_response readonly rows=15 cols=80></textarea> \
 		</td></tr></table></td></tr> \
 		 \
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'GPIOs' ); GPIODataTicker();\" value=\"GPIOs\"></td><td> \
+		<tr><td> \
 		<div id=GPIOs class=\"collapsible\"> \
 		<table width=100% border=1><tr>" +
  		GPIOlines
 		+ "</tr></table></div></td></tr>\
 \
-		<tr><td width=1>\
-		<input type=submit onclick=\"ShowHideEvent( 'SystemReflash' );\" value=\"System Reflash\"></td><td>\
+		<tr><td>\
 		<div id=SystemReflash class=\"collapsible\">\
 		<div id=InnerSystemReflash class=\"dragandrophandler\">\
 		<input id=\"dragndropersystem\" type=\"file\" multiple> <div id=innersystemflashtext>Drop or browse for system (0x000.. 0x400...) or web (.mpfs) reflash files.</div>\
