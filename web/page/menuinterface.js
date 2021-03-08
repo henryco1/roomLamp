@@ -169,26 +169,35 @@ function Ticker()
 {
 	setTimeout( Ticker, 1000 );
 
+	// lasthz seems to be the difference between the current message and the last message. 
 	lasthz = (msg - tickmessage);
 	tickmessage = msg;
+
+	// if the jquery property selector doesn't find the property, nothing will happen and it will look like system hz is 0
+	// a list doesn't have a value property, so nothing will happen in that scenario
 	if( lasthz == 0 )
 	{
+		console.log("lasthz == 0");
 		time_since_hz++;
 		if( time_since_hz > 3 )
 		{
+			console.log(time_since_hz);
 			$('#SystemStatusClicker').css("color", "red" );
-			$('#SystemStatusClicker').prop( "value", "System Offline" );
+			$('#SystemStatusClicker').text("System Offline" );
 			if( commsup != 0 && !is_waiting_on_stations ) IssueSystemMessage( "Comms Lost." );
 			commsup = 0;
 			StartWebSocket();
 		}
 		else
-			$('#SystemStatusClicker').prop( "value", "System " + 0 + "Hz" );
+			console.log("low time_since_hz");
+			$('#SystemStatusClicker').text("System " + 0 + "Hz" );
 	}
 	else
 	{
+		console.log("zero time since hz");
 		time_since_hz = 0;
-		$('#SystemStatusClicker').prop( "value", "System " + lasthz + "Hz" );
+		// $('#SystemStatusClicker').prop( "value", "System " + lasthz + "Hz" );
+		$('#SystemStatusClicker').text("System " + lasthz + "Hz" );
 	}
 }
 
@@ -201,7 +210,7 @@ function onMessage(evt)
 	if( commsup != 1 )
 	{
 		commsup = 1;
-		$('#SystemStatusClicker').css("color", "green" );
+		$('#SystemStatusClicker').css("color", "GreenYellow" );
 		IssueSystemMessage( "Comms Established." );
 	}
 

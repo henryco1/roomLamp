@@ -12,7 +12,7 @@
   td { vertical-align: top; }
   .collapsible { display:none; }
   .inbutton { background-color:blue; }
-  #SystemMessage { position: fixed; top: 5px; background-color: DarkSlateBlue; color: #ffffff; left: 5px; display:none; }
+  /* #SystemMessage { position: fixed; top: 5px; background-color: rgb(136, 125, 236); color: #e3e647; left: 5px; display:none; } */
   .dragandrophandler { border:2px dotted #0B85A1; color:#92AAB0;vertical-align:middle;padding:10px 10px 10 10px;margin-bottom:10px;font-size:200%;}
   .unsaved-input { border: 2px solid pink; border-radius: 7px; }
   kbd { background-color: #e1e3e5; border: 1px solid #adb3b9; border-radius: 3px;    box-shadow: 0 1px 0 rgba(12, 13, 14, 0.2), 0 0 0 2px #fff inset; display: inline-block; font-family: Arial,"Helvetica Neue",Helvetica,sans-serif; line-height: 1.4; padding: 0.1em 0.6em; white-space: nowrap; }
@@ -32,6 +32,8 @@
    
   <header class="header">
     <div class="header__title">Welcome to the basic Web-GUI</div>
+    <div id="SystemMessage" class="header__title">Welcome to the basic Web-GUI</div>
+    <!-- <div id="SystemMessage"> </div> -->
   </header>
 
   <aside class="sidenav">
@@ -40,6 +42,7 @@
     </div>
     <ul class="sidenav__list">
       <li class="sidenav__list-item" onclick="ShowHideEvent( 'SystemStatus' ); SystemInfoTick();" value='System Status' id=SystemStatusClicker>System</li>
+      <!-- <li class="sidenav__list-item"> <input type=submit onclick="ShowHideEvent( 'SystemStatus' ); SystemInfoTick();" value='System Status' id=SystemStatusClicker> </input> </li> -->
       <li class="sidenav__list-item" onclick="ShowHideEvent( 'LEDs' ); KickLEDs();" value="LEDs">LEDs</li>
       <li class="sidenav__list-item" onclick="ShowHideEvent( 'WifiSettings' ); KickWifiTicker();" value="Wifi Settings">Wifi</li>
       <li class="sidenav__list-item" onclick="ShowHideEvent( 'CustomCommand' );" value="Custom Command">Custom Command</li>
@@ -51,7 +54,7 @@
     <table id="MainMenu" class="main-overview"><tbody>
       
     </tbody></table>
-
+<!-- <input type=submit onclick=\"ShowHideEvent( 'SystemStatus' ); SystemInfoTick();\" value='System Status' id=SystemStatusClicker></td><td> \ -->
 <!--     <div class="main-header">
       <div class="main-header__heading">Hello User</div>
       <div class="main-header__updates">Recent Items</div>

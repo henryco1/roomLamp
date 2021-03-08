@@ -57,16 +57,14 @@ function init()
 			+ "</td>";
 
 	$('#MainMenu > tbody:first-child').before( "\
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'SystemStatus' ); SystemInfoTick();\" value='System Status' id=SystemStatusClicker></td><td> \
+		<tr><td> \
 		<div id=SystemStatus class='collapsible'> \
 		<table width=100% border=1><tr><td> \
 <div id=output></div><div id=systemsettings></div> \n		</td></tr></table></div></td></tr>"
 	);
 
 	$('#MainMenu > tbody:last-child').after( "\
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'WifiSettings' ); KickWifiTicker();\" value=\"Wifi Settings\"></td><td> \
+		<tr><td> \
 		<div id=WifiSettings class=\"collapsible\"> \
 		<table width=100% border=1><tr><td> \
 		Current Configuration: (May deviate from default configuration, reset here if in doubt)<form name=\"wifisection\" action=\"javascript:ChangeWifiConfig();\"> \
@@ -83,8 +81,7 @@ function init()
 		<input type=submit onclick=\"ScanForWifi();\" value=\"Scan For Stations (Will disconnect!)\"> \
 		</td></tr></table></div></td></tr> \
 		 \
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'CustomCommand' );\" value=\"Custom Command\"></td><td> \
+		<tr><td> \
 		<div id=CustomCommand class=\"collapsible\"> \
 		<table width=100% border=1><tr><td> \
 		Command: <input type=text id=custom_command> \
@@ -92,15 +89,13 @@ function init()
 		<textarea id=custom_command_response readonly rows=15 cols=80></textarea> \
 		</td></tr></table></td></tr> \
 		 \
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'GPIOs' ); GPIODataTicker();\" value=\"GPIOs\"></td><td> \
+		<tr><td> \
 		<div id=GPIOs class=\"collapsible\"> \
 		<table width=100% border=1><tr>" +
  		GPIOlines
 		+ "</tr></table></div></td></tr>\
 \
-		<tr><td width=1>\
-		<input type=submit onclick=\"ShowHideEvent( 'SystemReflash' );\" value=\"System Reflash\"></td><td>\
+		<tr><td>\
 		<div id=SystemReflash class=\"collapsible\">\
 		<div id=InnerSystemReflash class=\"dragandrophandler\">\
 		<input id=\"dragndropersystem\" type=\"file\" multiple> <div id=innersystemflashtext>Drop or browse for system (0x000.. 0x400...) or web (.mpfs) reflash files.</div>\
@@ -174,26 +169,35 @@ function Ticker()
 {
 	setTimeout( Ticker, 1000 );
 
+	// lasthz seems to be the difference between the current message and the last message. 
 	lasthz = (msg - tickmessage);
 	tickmessage = msg;
+
+	// if the jquery property selector doesn't find the property, nothing will happen and it will look like system hz is 0
+	// a list doesn't have a value property, so nothing will happen in that scenario
 	if( lasthz == 0 )
 	{
+		console.log("lasthz == 0");
 		time_since_hz++;
 		if( time_since_hz > 3 )
 		{
+			console.log(time_since_hz);
 			$('#SystemStatusClicker').css("color", "red" );
-			$('#SystemStatusClicker').prop( "value", "System Offline" );
+			$('#SystemStatusClicker').text("System Offline" );
 			if( commsup != 0 && !is_waiting_on_stations ) IssueSystemMessage( "Comms Lost." );
 			commsup = 0;
 			StartWebSocket();
 		}
 		else
-			$('#SystemStatusClicker').prop( "value", "System " + 0 + "Hz" );
+			console.log("low time_since_hz");
+			$('#SystemStatusClicker').text("System " + 0 + "Hz" );
 	}
 	else
 	{
+		console.log("zero time since hz");
 		time_since_hz = 0;
-		$('#SystemStatusClicker').prop( "value", "System " + lasthz + "Hz" );
+		// $('#SystemStatusClicker').prop( "value", "System " + lasthz + "Hz" );
+		$('#SystemStatusClicker').text("System " + lasthz + "Hz" );
 	}
 }
 
@@ -206,7 +210,7 @@ function onMessage(evt)
 	if( commsup != 1 )
 	{
 		commsup = 1;
-		$('#SystemStatusClicker').css("color", "green" );
+		$('#SystemStatusClicker').css("color", "GreenYellow" );
 		IssueSystemMessage( "Comms Established." );
 	}
 
